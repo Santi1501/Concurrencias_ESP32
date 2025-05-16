@@ -1,15 +1,18 @@
-// Cola para compartir comandos LED entre productor y consumidor
-QueueHandle_t myQueue;
+
+#include "data1.h"
+
+// Colas para compartir comandos LED entre productor y consumidor
+QueueHandle_t Pista1, Pista2, Pista3;
 
 SemaphoreHandle_t pista1, pista2, pista3;
-
-bool volatile semaforoActivo = true;
 
 // Configuración inicial
 void setup() {
   
-  // Crear una cola con capacidad para 5 comandos LED
-  myQueue = xQueueCreate(5, sizeof(LedCommand));
+  // 
+  Pista1 = xQueueCreate(3, sizeof(AvionCommand));
+  Pista2 = xQueueCreate(3, sizeof(AvionCommand));
+  Pista3 = xQueueCreate(3, sizeof(AvionCommand));
   
   pista1 = xSemaphoreCreateMutex();
   pista2 = xSemaphoreCreateMutex();
@@ -41,48 +44,107 @@ void setup() {
   );
 }
 
-void Tarea_de_Aviones(void * pvParameters) {
+void Consulta_aterrizaje(AvionCommand avion, SemaphoreHandle_t pista){
 
-  for(;;){
+  Serial.print("Avión ");
+  Serial.print(avion);
+  Serial.println(" está intentando aterrizar.");
 
-    delay(1000);
+  // Espera para simular tiempo de aproximación
+  delay(random(1000, 5000));
 
-    AvionCommand avion = randomCommand();
+  if(xSemaphoreTake(pista, portMAX_DELAY) == pdTRUE) {  // Toma el MUTEX
 
-    xQueueSend(myQueue, &avion, portMAX_DELAY);
+    Serial.print("Avión ");
+    Serial.print(avion);
+    Serial.println(" ha aterrizado en la pista.");
 
-    if(semaforoActivo){ // Solo actúa si es el turno de este semáforo
+    delay(random(2000, 4000));
 
-      if(xSemaphoreTake(pista1, portMAX_DELAY) == pdTRUE) {  // Toma el MUTEX
+    Serial.print("Avión ");
+    Serial.print(avion);
+    Serial.println(" ha liberado la pista.");
 
-      
-        /*semaforoActivo = false; // Pasa el turno al otro semáforo
-        xSemaphoreGive(mySemaphore); // Libera el MUTEX */
-      }
-
-      if(xSemaphoreTake(pista2, portMAX_DELAY) == pdTRUE) {  // Toma el MUTEX
-
-      
-        /*semaforoActivo = false; // Pasa el turno al otro semáforo
-        xSemaphoreGive(mySemaphore); // Libera el MUTEX */
-      }
-
-      if(xSemaphoreTake(pista3, portMAX_DELAY) == pdTRUE) {  // Toma el MUTEX
-
-      
-        /*semaforoActivo = false; // Pasa el turno al otro semáforo
-        xSemaphoreGive(mySemaphore); // Libera el MUTEX */
-      }
-    }
-
-    delay(10); // Pequeño retardo para no saturar el procesador
+    xSemaphoreGive(pista);
   }
 
+  else {
+    Serial.print("Avión ");
+    Serial.print(avion);
+    Serial.println(" no pudo aterrizar, pista ocupada.");
+  }
 }
 
 void Torre_de_Control(void * pvParameters) {
 
+  AvionCommand avion;
 
+  for(;;){
+
+    if (xQueueReceive(Pista1, &avion, 0) == pdTRUE) {
+      
+      Serial.print("Torre de Control: Autorizando aterrizaje del avión ");
+      Serial.print(avion);
+      Serial.println(" en pista 1.");
+      Consulta_aterrizaje(avion, pista1);
+    }
+
+    if (xQueueReceive(Pista2, &avion, 0) == pdTRUE) {
+      
+      Serial.print("Torre de Control: Autorizando aterrizaje del avión ");
+      Serial.print(avion);
+      Serial.println(" en pista 2.");
+      Consulta_aterrizaje(avion, pista2);
+    }
+
+    if (xQueueReceive(Pista3, &avion, 0) == pdTRUE) {
+      
+      Serial.print("Torre de Control: Autorizando aterrizaje del avión ");
+      Serial.print(avion);
+      Serial.println(" en pista 3.");
+      Consulta_aterrizaje(avion, pista3);
+    }
+  }
+}
+
+void Tarea_de_Aviones(void * pvParameters) {
+
+  for(;;){
+
+    // Espera aleatoria para simular el tiempo de aproximación
+    delay(random(1000, 5000));
+
+    AvionCommand avion = randomCommand();
+
+    Serial.print("Avión ");
+    Serial.print(avion);
+    Serial.println(" solicita aterrizaje.");
+
+    int pistaSeleccionada = random(1, 4);  // Aleatoriamente seleccionamos una pista (1, 2 o 3)
+
+    Serial.print("Avión ");
+    Serial.print(avion);
+    Serial.print(" solicita aterrizar en pista ");
+    Serial.println(pistaSeleccionada);
+
+    // Enviar la solicitud de aterrizaje a la cola correspondiente
+    if (pistaSeleccionada == 1) {
+      
+      xQueueSend(Pista1, &avion, portMAX_DELAY);
+    } 
+    
+    else if (pistaSeleccionada == 2) {
+      
+      xQueueSend(Pista2, &avion, portMAX_DELAY);
+    } 
+    
+    else if (pistaSeleccionada == 3) {
+      
+      xQueueSend(Pista3, &avion, portMAX_DELAY);
+    }
+
+    delay(10); // Pequeño retardo para no saturar el procesador
+  }
 }
 
 // Loop vacío: no se utiliza en FreeRTOS, todo corre en las tareas
