@@ -26,6 +26,7 @@ La torre de control autoriza el aterrizaje, haciendo que el avión intente tomar
 
 
 Una vez que el avión aterriza, libera el mutex para permitir que otros aviones puedan usar la pista.
+
 7. Función loop()
 La función loop() queda vacía, ya que todo el trabajo se realiza dentro de las tareas definidas en FreeRTOS. Las tareas son las que gestionan el flujo del programa en lugar de un bucle principal.
 
