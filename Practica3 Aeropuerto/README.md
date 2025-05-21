@@ -5,7 +5,7 @@ Consistencia del trabajo:
 Este código simula el sistema de control de aterrizajes de un aeropuerto utilizando un microcontrolador ESP32 y FreeRTOS. La idea principal es manejar varios aviones intentando aterrizar en diferentes pistas, de manera que cada pista solo puede ser utilizada por un avión a la vez. La sincronización se logra mediante el uso de semáforos (mutex) para proteger el acceso a las pistas, evitando que más de un avión aterrice en la misma pista simultáneamente.
 
 Pasos a seguir:
-1. Inicialización de colas y mutexes
+1. Inicialización de colas y mutex
 El código comienza definiendo tres colas (Pista1, Pista2, Pista3) para gestionar las solicitudes de aterrizaje para cada una de las tres pistas del aeropuerto. Además, se crean tres semáforos mutex (pista1, pista2, pista3) para garantizar que solo un avión pueda aterrizar en una pista a la vez.
 2. Configuración inicial (setup)
 En la función setup(), se crean las colas y los mutex, se inicia la comunicación serial y se configuran las tareas para que se ejecuten en diferentes núcleos del ESP32. La tarea Torre_de_Control corre en el Core 1, y la tarea Tarea_de_Aviones corre en el Core 0.
