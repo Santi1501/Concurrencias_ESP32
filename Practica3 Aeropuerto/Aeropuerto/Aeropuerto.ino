@@ -54,7 +54,7 @@ void Consulta_aterrizaje(AvionCommand avion, SemaphoreHandle_t pista){
   Serial.println(" está intentando aterrizar.");
 
   // Espera aleatoria para simular el tiempo de aproximación del avión
-  delay(random(1000, 5000));
+  vTaskDelay(pdMS_TO_TICKS(random(1000, 5000)));
 
   // Intentar tomar el mutex (debe obtenerlo para aterrizar el avión)
   if(xSemaphoreTake(pista, portMAX_DELAY) == pdTRUE) {  // Si logra tomar el mutex de la pista
@@ -64,7 +64,7 @@ void Consulta_aterrizaje(AvionCommand avion, SemaphoreHandle_t pista){
     Serial.println(" ha aterrizado en la pista.");
 
     // Simula un tiempo de aterrizaje
-    delay(random(2000, 4000));
+    vTaskDelay(pdMS_TO_TICKS(random(2000, 4000)));
 
     Serial.println("Avión ");
     Serial.println(avion); // Imprime que el avión desocupó la pista
@@ -76,6 +76,7 @@ void Consulta_aterrizaje(AvionCommand avion, SemaphoreHandle_t pista){
 
   // Si no pudo tomar el mutex, significa que la pista estaba ocupada
   else {
+
     Serial.println("Avión ");
     Serial.println(avion);
     Serial.println(" no pudo aterrizar, pista ocupada.");
@@ -113,7 +114,6 @@ void Torre_de_Control(void * pvParameters) {
       Serial.println(" en pista 3.");
       Consulta_aterrizaje(avion, pista3);  // Llama a la función para aterrizarlo en la pista 3
     }
-    }
   }
 }
 
@@ -123,7 +123,7 @@ void Tarea_de_Aviones(void * pvParameters) {
   for(;;){
 
     // Espera aleatoria para simular el tiempo de aproximación de los aviones
-    delay(random(1000, 5000));
+    vTaskDelay(pdMS_TO_TICKS(random(1000, 5000)));
 
      // Generar un comando de avión aleatorio
     AvionCommand avion = randomCommand();
@@ -152,7 +152,7 @@ void Tarea_de_Aviones(void * pvParameters) {
       xQueueSend(Pista3, &avion, portMAX_DELAY);
     }
 
-    delay(10); // Pequeño retardo para no saturar el procesador
+    vTaskDelay(pdMS_TO_TICKS(10)); // Pequeño retardo para no saturar el procesador
   }
 }
 
